@@ -19,6 +19,9 @@ PiO=0 # Fst value
 varA=0 # Number of site where all A sample have different genotype
 varB=0
 
+### Sliding window ####
+
+
 for l in eachline(f) #Reading msprime file line per line
 	if startswith(l,"#") # Reading simulation input value
 		a=split(l,r"\t|\n")
