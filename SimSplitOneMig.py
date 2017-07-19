@@ -1,6 +1,33 @@
 import msprime
 import numpy as np
 import ast
+from optparse import OptionParser
+
+parser = OptionParser()
+parser.add_option("-o", "--output", dest="output",
+	help="output file", metavar="FILE")
+parser.add_option("--NA", dest="NA",type=int,
+	help="size population ancestral", metavar="INT")
+parser.add_option("--N1", dest="N1",type=int,
+	help="size population 1", metavar="INT")
+parser.add_option("--N2", dest="N2",type=int,
+	help="size population 2", metavar="INT")
+parser.add_option("--Ms", dest="Ms",type=int,
+	help="start population migration (must be higher than Me)", metavar="INT")
+parser.add_option("--Me", dest="Me",type=int,
+	help="end population migration (must be lower than Ms)", metavar="INT")
+parser.add_option("--M1", dest="M1",type=float,
+	help="Migration rate", metavar="INT")
+parser.add_option("--Sp", dest="Sp",type=int,
+	help="split time", metavar="INT")
+parser.add_option("--S1", dest="S1",type=int,
+	help="Sampled individual in pop 1", metavar="INT")
+parser.add_option("--S2", dest="S2",type=int,
+	help="Sampled individual in pop 2", metavar="INT")
+parser.add_option("--Le", dest="Le",type=int,
+	help="Length of sequence simulated", metavar="INT")
+(options, args) = parser.parse_args()
+
 
 def LCA(tree,pop1,pop2):
 	#d=sorted(ast.literal_eval(str(tree)))
@@ -29,17 +56,31 @@ tree=next(simul.trees())
 LCA(tree,10,10)
 
 def sim1():
-	TS=6e6 #concedering 3 generation per years and a split 2 millions years ago
-	TM=2e6 # Time of start of migration (backward : if O, mean speciation until now)
-	TF=6e6 # Time of end of migration
-	NA=2e5 # ancestral pop size
-	N1=1e5 # pop 1 size
-	N2=1e5 # pop 2 size
-	S1=10 # Number of sampled individual in pop1
-	S2=10# Number of sampled individual in pop2
-	M1=0.001 # Migration value
+#	TS=6e6 #concedering 3 generation per years and a split 2 millions years ago
+#	TM=1e6 # Time of start of migration (backward : if O, mean speciation until now)
+#	TF=6e6 # Time of end of migration
+#	NA=2e5 # ancestral pop size
+#	N1=1e5 # pop 1 size
+#	N2=1e5 # pop 2 size
+#	S1=10 # Number of sampled individual in pop1
+#	S2=10# Number of sampled individual in pop2
+#	M1=0.001 # Migration value
+#	d=3
+#	Le=100000 # Length of the sequence
+#	Mu=2.9e-9 # mutation rate 
+#	Ru=2.6e-8 # recombination rate. Value for insect such Drosophila
+
+	TS=options.Sp #concedering 3 generation per years and a split 2 millions years ago
+	TM= options.Ms# Time of start of migration (backward : if O, mean speciation until now)
+	TF= options.Me# Time of end of migration
+	NA= options.NA# ancestral pop size
+	N1= options.N1# pop 1 size
+	N2= options.N2# pop 2 size
+	S1= options.S1# Number of sampled individual in pop1
+	S2= options.S2# Number of sampled individual in pop2
+	M1= options.M1# Migration value
 	d=3
-	Le=100000 # Length of the sequence
+	Le= options.Le# Length of the sequence
 	Mu=2.9e-9 # mutation rate 
 	Ru=2.6e-8 # recombination rate. Value for insect such Drosophila
 
@@ -56,11 +97,11 @@ def sim1():
 	#	]
 
 	demographic_events = [
-	msprime.MigrationRateChange(time=TM, rate=M1, matrix_index=(0,1)),
+	msprime.MigrationRateChange(time=TM, rate=M1, matrix_index=(0,1)), # end of migration
 	msprime.MigrationRateChange(time=TM, rate=M1, matrix_index=(1,0)),
-	msprime.MigrationRateChange(time=TF, rate=0),
-	msprime.MassMigration(time=TS, source=0, destination=1, proportion=1.0),
-	msprime.PopulationParametersChange(time=TS, initial_size=NA, growth_rate=0, population_id=1)
+	msprime.MigrationRateChange(time=TF, rate=0), # start (forward) of migration)
+	msprime.MassMigration(time=TS, source=0, destination=1, proportion=1.0), ## Split time
+	msprime.PopulationParametersChange(time=TS, initial_size=NA, growth_rate=0, population_id=1) ## change in pop size at split time
 	]
 
 	#dp=msprime.DemographyDebugger(
@@ -95,6 +136,6 @@ def sim1():
 	#analytical = d / 2 + (d - 1) / (2 * M1)
 	#print("Observed  =", np.mean(T))
 	#print("Predicted =", analytical)
-t = open("/media/pjay/DATAPART1/MigInf/test.txt","w")
+t = open(options.output,"w")
 sim1()
 t.close()
