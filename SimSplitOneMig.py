@@ -6,6 +6,8 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("-o", "--output", dest="output",
 	help="output file", metavar="FILE")
+parser.add_option("--divOut", dest="DivOut",
+	help="divergence output", metavar="FILE")
 parser.add_option("--NA", dest="NA",type=int,
 	help="size population ancestral", metavar="INT")
 parser.add_option("--N1", dest="N1",type=int,
@@ -50,10 +52,11 @@ def LCA(tree,pop1,pop2):
 				for k in d.keys():
 					if k > key:
 						d[k]=-5
-	#print(tree.get_time(min(r)))
-simul=msprime.simulate(sample_size=20, Ne=10)
-tree=next(simul.trees())                                                                                                                    
-LCA(tree,10,10)
+	u.write(str(tree.get_interval()) + "\t"+str(tree.get_time(min(r)))+ "\n")
+
+#simul=msprime.simulate(sample_size=20, Ne=10)
+#tree=next(simul.trees())                                                                                                                    
+#LCA(tree,10,10)
 
 def sim1():
 #	TS=6e6 #concedering 3 generation per years and a split 2 millions years ago
@@ -137,5 +140,6 @@ def sim1():
 	#print("Observed  =", np.mean(T))
 	#print("Predicted =", analytical)
 t = open(options.output,"w")
+u = open(options.DivOut,"w")
 sim1()
 t.close()

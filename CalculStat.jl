@@ -1,5 +1,4 @@
 #!/usr/bin/julia
-tic()
 using Combinatorics
 
 function pairwisedifference(n,s)
@@ -18,9 +17,6 @@ PiB=0 # Fst value
 PiO=0 # Fst value
 varA=0 # Number of site where all A sample have different genotype
 varB=0
-
-### Sliding window ####
-
 
 for l in eachline(f) #Reading msprime file line per line
 	if startswith(l,"#") # Reading simulation input value
@@ -48,23 +44,23 @@ for l in eachline(f) #Reading msprime file line per line
 		S += 1 # each line is a segrating site
 		a=split(l, r"\t|\n|$") ## split string to array
 		t=include_string(a[3])## convert a string of the form [a,b] to an array
-		p1=0
+		p1=0 # Number of individual with a mutation in pop1
 		for i in 1:pop1
 			p1 += t[i]
 		end
 	
-		p2=0
+		p2=0 # Number of individual with a mutation in pop2
 		for i in pop1+1:tot
 			p2 += t[i]
 		end
 	
 		if p1 == 0 || p1==pop1
-			PiAf=0 
+			PiAf=0 ## if no or all individual have the mutation, piA = O
 		else
-			varA+=1
-			Pi=pairwisedifference(pop1,p1)
-			PiA+=Pi
-			PiAf=Pi
+			varA+=1 ## IF not, is a site with variation
+			Pi=pairwisedifference(pop1,p1) # it 's a trick to calculate pi juste with the number individual with the mutation
+			PiA+=Pi # We increment Pi for the whole sequence
+			PiAf=Pi  
 		end
 	
 		if p2 == 0 || p2==pop2
@@ -76,25 +72,23 @@ for l in eachline(f) #Reading msprime file line per line
 			PiBf=Pi
 		end
 		
-		PiT=((pop1*pop2)-(p2*p1+(pop2-p2)*(pop1-p1)))/(pop1*pop2)
+		PiT=((pop1*pop2)-(p2*p1+(pop2-p2)*(pop1-p1)))/(pop1*pop2) # Tricks to calculate piO/Dxy between population 
 		PiO+=PiT
 		PiOf=PiT
-		Fst += (((PiOf - ((PiAf+PiBf)/2))/PiOf)) #?????
+		Fst += (((PiOf - ((PiAf+PiBf)/2))/PiOf)) 
 	end
 end
-PiAf=(PiA/lsize)
+PiAf=(PiA/lsize) # We divide the sum of pi by the number of site
 PiBf=(PiB/lsize)
 Dxy=(PiO/lsize)
 Fst=(Fst/lsize)
-println(varA)
-Da=Dxy-(PiA+PiB)/2
+Da=Dxy-(PiAf+PiBf)/2
 
-##### Tajima's D #################
+##### Tajima's D pop1#################
 a1=0
 for i in 1:(pop1-1)
 a1+=1/i
 end
-println(PiA)
 
 
 a2=0
@@ -109,19 +103,42 @@ c2=b2-((pop1+2)/(a1*pop1))+a2/(a1^2)
 e1=c1/a1
 e2=c2/(a1^2+a2)
 
-M=varA/a1 ##### S doit etre les siote variant dans pop 1, pas tout les site : a corriger ###
-#d=(PiA/pop1)-M
+M=varA/a1
 d=PiA-M
-println(d)
-D=d/(sqrt(e1*varA+e2*varA*(varA-1)))
+D1=d/(sqrt(e1*varA+e2*varA*(varA-1)))
+
+################################
+##### Tajima's D pop2#################
+a1=0
+for i in 1:(pop2-1)
+a1+=1/i
+end
+
+
+a2=0
+for i in 1:(pop2-1)
+a2+=1/i^2
+end
+
+b1=(pop2+1)/3*(pop2-1)
+b2=(2*(pop2^2+pop2+3))/(9*pop2*(pop2-1))
+c1=b1-1/a1
+c2=b2-((pop2+2)/(a1*pop2))+a2/(a1^2)
+e1=c1/a1
+e2=c2/(a1^2+a2)
+
+M=varB/a1
+d=PiB-M
+D2=d/(sqrt(e1*varB+e2*varB*(varB-1)))
 
 ################################
 
+
 println("PiA=",PiAf)
-println("D=",D)
+println("Tajima'D pop1 =",D1)
+println("Tajima'D pop2 =",D2)
 println("PiB=",PiBf)
 println("Fst=",Fst)
 println("Dxy=",Dxy)
 println("Da=",Da)
 close(f)
-toc()
