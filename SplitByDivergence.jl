@@ -27,8 +27,6 @@ for l in eachline(f) # just for the first line, thing are different
 	break
 end
 
-
-
 for l in eachline(f) # each line contain an interval of position in the sequence and the corresponding divergence time. Start at line 2, as the fist line was ever readed in the last loop
 	global a=split(l, r"\(|, |\)|\t|\n|$") # split string into array . pos 2 contain the first position of the interval, pos 3 containt the end of the interval, and pos 5 contain the divergence time
 	win=div(parse(Float64,a[5]),WinSize) # contain the time  interval of this sequence interval. It correspond to division (entiere) of the divergence time by the winSize.
@@ -41,60 +39,38 @@ write(out,a[3],"\t",string(Window[end])) # Write the last position and the last 
 close(f)
 close(out)
 
-
 #dictOut=Dict() #Contain the reference file for each time interval 
 win = open(ARGS[3])
 lines = readlines(win)
 seq = open(ARGS[4])
 
 for ln in eachline(seq) # open just the first line of the seq file
-	global c=ln
+	global c=chomp(ln)
 	break
 end
-
-#for i in 1:w
-#	dictOut[i] = "win$i.txt"	
-#	write(dictOut[i], a)	
-#end
-
-
-count=1 ## start a the first line of the window file
-a=split(lines[count], r"\t|-|$")  
-w=open("Inter$(a[1])-$(a[2]).txt", "w") # open the first file containing the variant for this window
 
 mkdir("window")
 cd("window") ## create and moove to a directory containt all the window
 
+count=1 ## start a the first line of the window file
+a=split(lines[count], r"\t|-|$")  
+w=open("Inter$(a[1])-$(a[2]).txt", "w") # open the first file containing the variants for this window
+write(w,c,"\t",a[3],"\t",a[1],"\t",a[2],"\n")#write the header, containing the time interval and the sequence inteval corresponding
+
 for l in eachline(seq)
 	s=split(l, r"\t|\n|$") ## split string to array
 	#println(s[2])
-	if parse(Float64,s[2]) < parse(Float64,a[2])
+	if parse(Float64,s[2]) < parse(Float64,a[2]) # if the position of the variant is lower than the position of end of the interval, that mean this variant is in this window. So we push this variant in the file conrresponding to this window.
 		write(w,l)
-	else
-		println(s[2],"\t", a[2])
-		while parse(Float64,s[2]) > parse(Float64,a[2])
-			count+=1
+	else 						# if not, we have to moove to the next sequence window
+		while parse(Float64,s[2]) > parse(Float64,a[2]) # Some time the variant is not on the next window, but in the window after, or after after,... So we check this. 
+			count+=1 #we moove to the next line of the window file --> to the next window
 			global a=split(lines[count], r"\t|-|$")
-			global w=open("Inter$(a[1])-$(a[2]).txt","w")
+			global w=open("Inter$(a[1])-$(a[2]).txt","w") # we open the file for the new window. 
+			write(w,c,"\t",a[3],"\t",a[1],"\t",a[2],"\n")# write the header in all the files
 		end
-		println(s[2],"\t", a[2], "\n")
-		write(w,l)
+		write(w,l)# we push the variant in the new window file
 	end
 end
 cd("..")
-#println(a[1])
-#w=write("Inter$(a[1])-$(a[2]).txt")
 
-#
-#write("win5.txt","soso")
-#
-##for l in eachline(seq)
-#	
-#
-#
-#println(a[1])
-#mkdir("window")
-#cd("window")
-#cd("..")
-#rm("window", recursive=true)
-#

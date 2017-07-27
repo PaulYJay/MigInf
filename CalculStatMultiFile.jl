@@ -39,17 +39,18 @@ dictFile=Dict() #dict that will contain output file
 cd(ARGS[1]) # grep the directiory contain split sequences
 dirfiles=readdir()
 for file in dirfiles # for each sequence interval
-	println(file)
+#	println(file)
 	if countlines(file) == 1 # if the file just contain header (empty), all value equal 0.0
 		f = open("$file")
 		head=readlines(f)[1]
 		a=split(head,r"\t|\n")
 		win=a[5]	
+		global sizeinter=parse(Float64,a[7])-parse(Float64,a[6]) # size of the sequence interval
 		if haskey(dictFile,win)
 			continue
 		else
 			dictFile[win]=open("Interval.$win.txt","w")
-			write(dictFile[win],"PiA","\t","PiB","\t","Tajima'D_pop1","\t","Tajima'D_pop2","\t","Fst","\t","Dxy","\t","Da","\n")
+			write(dictFile[win],"sites","\t","PiA","\t","PiB","\t","Tajima'D_pop1","\t","Tajima'D_pop2","\t","Fst","\t","Dxy","\t","Da","\n")
 		end
 		PiAf=0.0
 		PiBf=0.0
@@ -71,12 +72,12 @@ for file in dirfiles # for each sequence interval
 			if startswith(l,"#") # Reading simulation input value
 				a=split(l,r"\t|\n")
 				win=a[5]	# time interval corresponding to this sequence interval
-				global sizeinter=a[7]-a[8] # size of the sequence interval
+				global sizeinter=parse(Float64,a[7])-parse(Float64,a[6]) # size of the sequence interval
 				if haskey(dictFile,win) # if this time interval ever have its outfile, do nothing
 					continue
 				else
 					dictFile[win]=open("Interval.$win.txt","w") #else, open it in the directionnary value
-					write(dictFile[win],"PiA","\t","PiB","\t","Tajima'D_pop1","\t","Tajima'D_pop2","\t","Fst","\t","Dxy","\t","Da","\n") # print header
+					write(dictFile[win],"sites","\t","PiA","\t","PiB","\t","Tajima'D_pop1","\t","Tajima'D_pop2","\t","Fst","\t","Dxy","\t","Da","\n") # print header
 				end
 				global pop1=parse(Int,a[2]) # Number of sample in pop 1
 				global pop2=parse(Int,a[3]) # Number of sample in pop 2
@@ -144,10 +145,14 @@ for file in dirfiles # for each sequence interval
 	## 	Check the good way to calculate mean of the statistique on the diferent sequence interval (to take into account that all interval have different size . A mean of means is not the same ,thing that an overall mean) Same thing for standard deviation. 
 	##
 	##############
-		PiAf=PiA/sizeinter #divide by the number of site in the interval
-		PiBf=PiB/sizeinter
-		Dxy=PiO/sizeinter
-		Fst=Fst/sizeinter
+#		PiAf=PiA/sizeinter #divide by the number of site in the interval
+#		PiBf=PiB/sizeinter
+#		Dxy=PiO/sizeinter
+#		Fst=Fst/sizeinter
+		PiAf=PiA #divide by the number of site in the interval
+		PiBf=PiB
+		Dxy=PiO
+		Fst=Fst
 		Da=Dxy-(PiAf+PiBf)/2
 
 	if PiA != 0.0 # to avoid division by 0.0
@@ -162,64 +167,16 @@ for file in dirfiles # for each sequence interval
 		end
 		close(f)
 	end
-###### Tajima's D pop1#################
-#a1=0
-#for i in 1:(pop1-1)
-#a1+=1/i
-#end
-#
-#
-#a2=0
-#for i in 1:(pop1-1)
-#a2+=1/i^2
-#end
-#
-#b1=(pop1+1)/3*(pop1-1)
-#b2=(2*(pop1^2+pop1+3))/(9*pop1*(pop1-1))
-#c1=b1-1/a1
-#c2=b2-((pop1+2)/(a1*pop1))+a2/(a1^2)
-#e1=c1/a1
-#e2=c2/(a1^2+a2)
-#
-#M=varA/a1
-#d=PiA-M
-#D1=d/(sqrt(e1*varA+e2*varA*(varA-1)))
-#
-#################################
-###### Tajima's D pop2#################
-#a1=0
-#for i in 1:(pop2-1)
-#a1+=1/i
-#end
-#
-#
-#a2=0
-#for i in 1:(pop2-1)
-#a2+=1/i^2
-#end
-#
-#b1=(pop2+1)/3*(pop2-1)
-#b2=(2*(pop2^2+pop2+3))/(9*pop2*(pop2-1))
-#c1=b1-1/a1
-#c2=b2-((pop2+2)/(a1*pop2))+a2/(a1^2)
-#e1=c1/a1
-#e2=c2/(a1^2+a2)
-#
-#M=varB/a1
-#d=PiB-M
-#D2=d/(sqrt(e1*varB+e2*varB*(varB-1)))
-#
-#################################
-	#write(dictFile[win],"PiA","\t","PiB","\t","Tajima'D pop1","\t","Tajima'D pop2","\t","Fst","\t","Dxy","\t","Da","\n")
-	write(dictFile[win],string(PiAf ,"\t",PiBf ,"\t",D1 ,"\t",D2 ,"\t",Fst ,"\t",Dxy ,"\t",Da,"\n"))
 
-	println("PiA=",PiAf)
-	println("PiB=",PiBf)
-	println("Tajima'D pop1 =",D1)
-	println("Tajima'D pop2 =",D2)
-	println("Fst=",Fst)
-	println("Dxy=",Dxy)
-	println("Da=",Da)
+	write(dictFile[win],string(sizeinter, "\t", PiAf ,"\t",PiBf ,"\t",D1 ,"\t",D2 ,"\t",Fst ,"\t",Dxy ,"\t",Da,"\n"))
+
+	#println("PiA=",PiAf)
+	#println("PiB=",PiBf)
+	#println("Tajima'D pop1 =",D1)
+	#println("Tajima'D pop2 =",D2)
+	#println("Fst=",Fst)
+	#println("Dxy=",Dxy)
+	#println("Da=",Da)
 end
 for i in values(dictFile) # close all open file
 	close(i)
@@ -228,11 +185,36 @@ end
 dirfiles=readdir()
 for file in dirfiles
 	if startswith(file, "Interval.") # if the file are the one containing the statistique
-		a=readdlm("$file")
-		b=a[2:end,:] #avaid the header line
-		c=mapslices(mean,b,1) # mean of column
-		println(c)
+		StatVar=Dict()
+		StatMean=Dict()
+		println(file)
+		a=readdlm(file, Float64, header=true) #a[1] contain the value, a[2] the header
+		c=mapslices(sum,a[1],1) # mean of column
+		c=c/c[1] # contain mean value
+		c[1]=mean(a[1][:,1]) # mean length of sequence
+		for i in 1:size(a[2],2)
+			StatVar[a[2][1,i]]=0	
+			StatMean[a[2][1,i]]=c[i]
+		end
+		if countlines(file) != 2 # if the file just contain one value, all variance  equal 0.0
+			for col in 2:size(a[1],2)
+				a[1][:,col]=a[1][:,col]./a[1][:,1] # divide by the length of the sequence
+			end
+			count=0
+			for col in 2:(size(a[1],2)-1)
+				for i in 1:size(a[1],1)
+					StatVar[a[2][1,col]] += ((a[1][i,col]-c[col])^2)*a[1][i,1] #add to a count the difference between observed and mean at square (variance), multiple by the number of pos in this interval (to normalize the value)
+				end
+				StatVar[a[2][1,col]]=StatVar[a[2][1,col]]/sum(a[1][:,col]) #divide by the total length --> it the variance of this stat # add a way to store and print iot !!!!!!!!!!!!!!
+			end
+			StatVar[a[2][1,1]]=var(a[1][:,1])
+		end
+		for k in keys(StatVar)
+			println(k, "\t", "Mean", "=>", StatMean[k], "\n\t", "Var", "=>", StatVar[k])
+		end
 	end
 end
+
 cd("..")
-rm("window", recursive=true)
+
+#rm("window/Interval.*", recursive=true)
